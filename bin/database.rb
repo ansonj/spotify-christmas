@@ -1,13 +1,22 @@
 # frozen_string_literal: true
 
 require 'sqlite3'
+require_relative 'terminal_helpers'
 
 # Wrapper for sqlite file access
 class SCDatabase
   def initialize(path)
     @path = path
     @db = self.class.create_database @path
+
     migrate_database
+
+    if client_id.nil?
+      self.client_id = TerminalHelpers.prompt_for_input 'Please enter your Spotify client ID.'
+    end
+    if client_secret.nil?
+      self.client_secret = TerminalHelpers.prompt_for_input 'Please enter your Spotify client secret.'
+    end
   end
 
   CONFIG_TABLE_NAME = 'config'
@@ -15,6 +24,7 @@ class SCDatabase
   CONFIG_COLUMN_VALUE = 'value'
   CONFIG_KEY_DB_VERSION = 'db_version'
   CONFIG_KEY_CLIENT_ID = 'client_id'
+  CONFIG_KEY_CLIENT_SECRET = 'client_secret'
 
   def self.create_database(path)
     database_already_exists = File.readable? path
@@ -27,12 +37,14 @@ class SCDatabase
   end
 
   def migrate_database
-    # case database_version
-    # when 0
-    # CREATE TABLE ...
-    # database_version = 1
-    # migrate_database if there's a subsequent migration
-    # end
+    case database_version.to_i
+    when 0
+      [CONFIG_KEY_CLIENT_ID, CONFIG_KEY_CLIENT_SECRET].each do |key|
+        @db.execute("INSERT INTO #{CONFIG_TABLE_NAME} VALUES (?, ?)", [key, nil])
+      end
+      self.database_version = 1
+      # When a new migation is added, call migrate_database again at the end of the previous case
+    end
   end
 
   def read_config_value(key)
@@ -51,5 +63,21 @@ class SCDatabase
 
   def database_version=(new_value)
     write_config_value CONFIG_KEY_DB_VERSION, new_value
+  end
+
+  def client_id
+    read_config_value CONFIG_KEY_CLIENT_ID
+  end
+
+  def client_id=(new_value)
+    write_config_value CONFIG_KEY_CLIENT_ID, new_value
+  end
+
+  def client_secret
+    read_config_value CONFIG_KEY_CLIENT_SECRET
+  end
+
+  def client_secret=(new_value)
+    write_config_value CONFIG_KEY_CLIENT_SECRET, new_value
   end
 end
