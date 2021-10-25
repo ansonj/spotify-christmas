@@ -6,4 +6,10 @@ module TerminalHelpers
     puts message
     exit 1
   end
+
+  def self.prompt_for_input(message)
+    puts message
+    print '> '
+    $stdin.gets.chomp
+  end
 end
