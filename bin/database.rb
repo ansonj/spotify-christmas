@@ -35,13 +35,21 @@ class SCDatabase
     # end
   end
 
-  def database_version
-    @db.execute("SELECT #{CONFIG_COLUMN_VALUE} FROM #{CONFIG_TABLE_NAME} WHERE #{CONFIG_COLUMN_KEY} = ?", [CONFIG_KEY_DB_VERSION]) do |row|
+  def read_config_value(key)
+    @db.execute("SELECT #{CONFIG_COLUMN_VALUE} FROM #{CONFIG_TABLE_NAME} WHERE #{CONFIG_COLUMN_KEY} = ?", [key]) do |row|
       return row.first
     end
   end
 
+  def write_config_value(key, value)
+    @db.execute("UPDATE #{CONFIG_TABLE_NAME} SET #{CONFIG_COLUMN_VALUE} = ? WHERE #{CONFIG_COLUMN_KEY} = ?", [value, key])
+  end
+
+  def database_version
+    read_config_value CONFIG_KEY_DB_VERSION
+  end
+
   def database_version=(new_value)
-    @db.execute("UPDATE #{CONFIG_TABLE_NAME} SET #{CONFIG_COLUMN_VALUE} = ? WHERE #{CONFIG_COLUMN_KEY} = ?", [new_value, CONFIG_KEY_DB_VERSION])
+    write_config_value CONFIG_KEY_DB_VERSION, new_value
   end
 end
