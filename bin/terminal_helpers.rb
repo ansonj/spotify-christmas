@@ -8,7 +8,7 @@ module TerminalHelpers
   end
 
   def self.prompt_for_input(message)
-    puts message
+    puts message unless message.nil?
     print '> '
     $stdin.gets.chomp
   end
